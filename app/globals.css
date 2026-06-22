@@ -15,8 +15,9 @@ body {
   margin: 0;
   color: #2b2118;
   background:
-    radial-gradient(circle at top left, rgba(244, 122, 31, 0.12), transparent 34rem),
-    linear-gradient(180deg, #fff4df 0%, #fffaf0 52%, #f5e5c8 100%);
+    linear-gradient(135deg, rgba(111, 159, 57, 0.08) 0 25%, transparent 25% 50%, rgba(244, 122, 31, 0.08) 50% 75%, transparent 75%),
+    linear-gradient(180deg, #fff8e9 0%, #fff2d8 48%, #f6dfb6 100%);
+  background-size: 34px 34px, auto;
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -33,4 +34,14 @@ button {
 
 .focus-ring {
   @apply focus:outline-none focus:ring-4 focus:ring-merca-orange/25;
+}
+
+.shell-panel {
+  @apply rounded-lg border border-orange-200/80 bg-white/90 shadow-warm backdrop-blur;
+}
+
+.warm-band {
+  background:
+    linear-gradient(135deg, rgba(244, 122, 31, 0.16), rgba(111, 159, 57, 0.13)),
+    #fff4df;
 }

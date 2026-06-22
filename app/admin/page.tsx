@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight, Trophy } from "lucide-react";
 import { StatCard } from "@/components/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBranchName, type Customer } from "@/lib/types";
@@ -51,9 +52,14 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-black text-merca-ink">Dashboard</h1>
-        <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-merca-muted">
+      <div className="warm-band shell-panel overflow-hidden p-6 sm:p-8">
+        <p className="mb-3 inline-flex rounded-lg bg-white/80 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-merca-green">
+          Panel Mercalito
+        </p>
+        <h1 className="text-4xl font-black tracking-tight text-merca-ink sm:text-5xl">
+          Dashboard
+        </h1>
+        <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-merca-muted">
           Vista rápida del Club Mercalito, altas recientes y sucursales que más están sumando clientes.
         </p>
       </div>
@@ -66,11 +72,12 @@ export default async function AdminDashboard() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-lg border border-orange-200 bg-white/85 p-4 shadow-sm">
+        <div className="shell-panel p-5">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h2 className="text-xl font-black text-merca-ink">Últimos registros</h2>
-            <Link href="/admin/customers" className="text-sm font-black text-merca-orange">
+            <Link href="/admin/customers" className="inline-flex items-center gap-1 text-sm font-black text-merca-orange">
               Ver clientes
+              <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="overflow-x-auto">
@@ -97,11 +104,14 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-orange-200 bg-white/85 p-4 shadow-sm">
-          <h2 className="text-xl font-black text-merca-ink">Ranking de sucursales</h2>
+        <div className="shell-panel p-5">
+          <h2 className="flex items-center gap-2 text-xl font-black text-merca-ink">
+            <Trophy className="h-5 w-5 text-merca-orange" />
+            Ranking de sucursales
+          </h2>
           <div className="mt-4 space-y-3">
             {ranking.map((item, index) => (
-              <div key={item.branch_name} className="flex items-center justify-between rounded-lg bg-merca-cream px-3 py-2">
+              <div key={item.branch_name} className="flex items-center justify-between rounded-lg bg-merca-cream px-4 py-3 shadow-sm">
                 <span className="font-black text-merca-ink">
                   {index + 1}. {item.branch_name}
                 </span>
