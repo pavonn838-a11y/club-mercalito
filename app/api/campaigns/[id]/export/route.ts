@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
+import { getCampaignRecipients } from "@/lib/campaigns";
 import { toCsv } from "@/lib/csv";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getBranchName } from "@/lib/types";
-
-function personalize(message: string, name: string, branch: string) {
-  return message.replaceAll("{nombre}", name).replaceAll("{sucursal}", branch);
-}
 
 export async function GET(
   _request: Request,
@@ -34,38 +30,20 @@ export async function GET(
     return NextResponse.json({ error: "Campaña no encontrada" }, { status: 404 });
   }
 
-  let customersQuery = supabase
-    .from("customers")
-    .select("id, name, phone, branches(name)")
-    .eq("status", "active")
-    .eq("opt_in", true)
-    .order("name");
+  const recipients = await getCampaignRecipients(supabase, campaign);
 
-  if (campaign.branch_id) {
-    customersQuery = customersQuery.eq("branch_id", campaign.branch_id);
-  }
-
-  const { data: customers } = await customersQuery;
-
-  const rows = (customers ?? []).map((customer) => {
-    const branchName = getBranchName(customer.branches);
-    return {
-      nombre: customer.name,
-      whatsapp: customer.phone,
-      mensaje: personalize(campaign.message, customer.name, branchName)
-    };
-  });
+  const rows = recipients.map((recipient) => ({
+    nombre: recipient.name,
+    whatsapp: recipient.phone,
+    mensaje: recipient.personalizedMessage
+  }));
 
   if (rows.length) {
     await supabase.from("campaign_recipients").insert(
-      (customers ?? []).map((customer) => ({
+      recipients.map((recipient) => ({
         campaign_id: campaign.id,
-        customer_id: customer.id,
-        personalized_message: personalize(
-          campaign.message,
-          customer.name,
-          getBranchName(customer.branches)
-        )
+        customer_id: recipient.customerId,
+        personalized_message: recipient.personalizedMessage
       }))
     );
   }

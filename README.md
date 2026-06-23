@@ -10,7 +10,7 @@ App Next.js + Supabase para registrar clientes desde QR por sucursal y exportar 
 - Panel privado con login en `/login`.
 - Dashboard con métricas.
 - Clientes con filtros, buscador, bajas y exportación CSV.
-- Campañas con variables `{nombre}` y `{sucursal}` y CSV personalizado.
+- Campañas con variables `{nombre}` y `{sucursal}`, CSV personalizado y envío por WhatsApp API cuando están cargadas las credenciales.
 - Sucursales con link de registro, copiar link y descarga de QR PNG.
 - SQL de tablas, índices, vista de métricas y datos de ejemplo.
 
@@ -23,9 +23,17 @@ NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
 SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+WHATSAPP_ACCESS_TOKEN=tu_token_de_whatsapp
+WHATSAPP_PHONE_NUMBER_ID=tu_phone_number_id
+WHATSAPP_TEMPLATE_NAME=nombre_de_la_plantilla_aprobada
+WHATSAPP_TEMPLATE_LANGUAGE=es_AR
+WHATSAPP_API_VERSION=v20.0
 ```
 
 `SUPABASE_SERVICE_ROLE_KEY` queda solo del lado servidor. No la expongas en el navegador.
+
+Las variables de WhatsApp se cargan cuando ya tenés WhatsApp Business Platform o un proveedor conectado. La plantilla aprobada debe aceptar 3 variables en este orden: nombre del cliente, sucursal y mensaje personalizado.
 
 ## Crear la base en Supabase
 
@@ -75,10 +83,14 @@ En el panel, entrá a `Sucursales`. Cada local muestra:
 
 Ese QR es el que se imprime y pega en cada sucursal. El cliente no elige local: el sistema lo toma del parámetro `local`.
 
-## Próxima etapa WhatsApp API
+## Envío por WhatsApp API
 
-Las campañas ya guardan mensaje, sucursal destino y destinatarios exportados. Para integrar WhatsApp Business API más adelante, el punto natural es reemplazar o complementar el endpoint:
+En `Campañas`, cada campaña en borrador muestra el botón `Enviar por WhatsApp`. El sistema:
 
-`app/api/campaigns/[id]/export/route.ts`
+- Filtra solo clientes activos con `opt_in = true`.
+- Excluye bajas.
+- Personaliza `{nombre}` y `{sucursal}`.
+- Envía usando una plantilla aprobada de WhatsApp.
+- Marca la campaña como enviada si hubo envíos correctos.
 
-Ahí ya están filtrados los clientes activos con opt-in y con bajas excluidas.
+Si faltan las variables de WhatsApp, el panel muestra un aviso y no manda mensajes.

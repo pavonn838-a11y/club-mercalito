@@ -2,9 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getCampaignRecipients } from "@/lib/campaigns";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isValidWhatsApp, normalizePhone } from "@/lib/phone";
+import { getWhatsAppConfig, sendWhatsAppTemplate } from "@/lib/whatsapp";
 
 export type ClubFormState = {
   ok: boolean;
@@ -178,4 +180,66 @@ export async function markCampaignSent(formData: FormData) {
     .eq("id", id);
 
   revalidatePath("/admin/campaigns");
+}
+
+export async function sendCampaignByWhatsApp(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const supabase = createAdminClient();
+  const config = getWhatsAppConfig();
+
+  if (config.missing.length) {
+    redirect(`/admin/campaigns?whatsapp=missing&vars=${config.missing.join(",")}`);
+  }
+
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("id, name, message, branch_id")
+    .eq("id", id)
+    .single();
+
+  if (!campaign) {
+    redirect("/admin/campaigns?whatsapp=not-found");
+  }
+
+  const recipients = await getCampaignRecipients(supabase, campaign);
+
+  if (!recipients.length) {
+    redirect("/admin/campaigns?whatsapp=empty");
+  }
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const recipient of recipients) {
+    try {
+      await sendWhatsAppTemplate({
+        to: recipient.phone,
+        name: recipient.name,
+        branchName: recipient.branchName,
+        message: recipient.personalizedMessage
+      });
+
+      sent += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+
+  if (sent > 0) {
+    await supabase.from("campaign_recipients").insert(
+      recipients.map((recipient) => ({
+        campaign_id: campaign.id,
+        customer_id: recipient.customerId,
+        personalized_message: recipient.personalizedMessage
+      }))
+    );
+
+    await supabase
+      .from("campaigns")
+      .update({ status: "sent", sent_at: new Date().toISOString() })
+      .eq("id", id);
+  }
+
+  revalidatePath("/admin/campaigns");
+  redirect(`/admin/campaigns?whatsapp=sent&sent=${sent}&failed=${failed}`);
 }
